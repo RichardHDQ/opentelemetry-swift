@@ -64,42 +64,11 @@ public protocol SpanBase: AnyObject, CustomStringConvertible {
   func addEvent(name: String, attributes: [String: AttributeValue], timestamp: Date)
 }
 
-public protocol SpanExceptionRecorder {
-  /// Adds an exception event to the Span.
-  /// - Parameters:
-  ///   - exception: the exception to be recorded.
-  func recordException(_ exception: SpanException)
-
-  /// Adds an exception event to the Span.
-  /// Use this method to specify an explicit event timestamp. If not called, the implementation
-  /// will use the current timestamp value, which should be the default case.
-  /// - Parameters:
-  ///   - exception: the exception to be recorded.
-  ///   - timestamp: the explicit event timestamp in nanos since epoch.
-  func recordException(_ exception: SpanException, timestamp: Date)
-
-  /// Adds an exception event to the Span, with additional attributes to go alongside the
-  /// default attribuites derived from the exception itself.
-  /// - Parameters:
-  ///   - exception: the exception to be recorded.
-  ///   - attributes: Dictionary of attributes name/value pairs associated with the event.
-  func recordException(_ exception: SpanException, attributes: [String: AttributeValue])
-
-  /// Adds an exception event to the Span, with additional attributes to go alongside the
-  /// default attribuites derived from the exception itself.
-  /// Use this method to specify an explicit event timestamp. If not called, the implementation
-  /// will use the current timestamp value, which should be the default case.
-  /// - Parameters:
-  ///   - exception: the exception to be recorded.
-  ///   - attributes: Dictionary of attributes name/value pairs associated with the event.
-  ///   - timestamp: the explicit event timestamp in nanos since epoch.
-  func recordException(_ exception: SpanException, attributes: [String: AttributeValue], timestamp: Date)
-}
 
 /// An interface that represents a span. It has an associated SpanContext.
 /// Spans are created by the SpanBuilder.startSpan method.
 /// Span must be ended by calling end().
-public protocol Span: SpanBase, SpanExceptionRecorder {
+public protocol Span: SpanBase {
   /// End the span.
   func end()
 
@@ -149,29 +118,6 @@ public extension SpanBase {
 
   func setAttribute(key: SemanticAttributes, value: Bool) {
     return setAttribute(key: key.rawValue, value: AttributeValue.bool(value))
-  }
-}
-
-public extension SpanExceptionRecorder {
-  /// Adds any Error as an exception event to the Span, with optional additional attributes
-  /// and timestamp.
-  /// If additonal attributes are specified, they are merged with the default attributes
-  /// derived from the error itself.
-  /// If an explicit timestamp is not provided, the implementation will use the current
-  /// timestamp value, which should be the default case.
-  /// - Parameters:
-  ///   - exception: the exception to be recorded.
-  ///   - attributes: Dictionary of attributes name/value pairs associated with the event.
-  ///   - timestamp: the explicit event timestamp in nanos since epoch.
-  func recordException(_ exception: Error, attributes: [String: AttributeValue]? = nil, timestamp: Date? = nil) {
-    let exception = exception as NSError
-
-    switch (attributes, timestamp) {
-    case (.none, .none): recordException(exception)
-    case let (.some(attributes), .none): recordException(exception, attributes: attributes)
-    case let (.none, .some(timestamp)): recordException(exception, timestamp: timestamp)
-    case let (.some(attributes), .some(timestamp)): recordException(exception, attributes: attributes, timestamp: timestamp)
-    }
   }
 }
 
